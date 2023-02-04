@@ -61,8 +61,8 @@ initial begin
 
 end
 
-vidc_dcfifo VIDEO_FIFO(
-
+// vidc_dcfifo VIDEO_FIFO(
+cdcfifo #(.depth(FIFO4WORDS ? 2 : 3)) VIDEO_FIFO(
 	.aclr   ( rst       ),
 	.data   ( cpu_data  ),
 	.rdclk  ( clkdev    ),

@@ -4,3 +4,6 @@
 [submodule "rtl/fdc1772"]
 	path = rtl/fdc1772
 	url = https://github.com/mist-devel/fdc1772-verilator.git
+[submodule "DeMiSTify"]
+	path = DeMiSTify
+	url = https://github.com/robinsonb5/DeMiSTify.git

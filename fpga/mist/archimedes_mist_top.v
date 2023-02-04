@@ -51,6 +51,9 @@ module archimedes_mist_top(
 	output        DRAM_WE_N,
   
 	// SPI
+`ifdef DEMISTIFY
+	input         SPI_DO_IN,
+`endif
 	inout         SPI_DO,
 	input         SPI_DI,
 	input         SPI_SCK,
