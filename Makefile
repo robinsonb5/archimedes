@@ -5,7 +5,7 @@ PROJECTPATH=./
 PROJECTTOROOT=../
 BOARD=
 ROMSIZE1=16384
-ROMSIZE2=2048
+ROMSIZE2=4096
 
 # Prevent MiST / MiSTer targets being built if the user supplied the BOARDS variable when invoking make.
 TARGETS_NOMIST=$(DEMISTIFYPATH)/site.template $(DEMISTIFYPATH)/site.mk $(SUBMODULES) firmware init compile tns

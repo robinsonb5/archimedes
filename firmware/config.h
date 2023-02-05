@@ -2,6 +2,9 @@
    Each core will have different requirements of the firmware, and by avoiding
    the parts not needed the ROM size can be kept to a minimum */
 
+#include "keyboard.h"
+#define KEY_OSD KEY_PRTSCRN
+
 #ifndef CONFIG_H
 #define CONFIG_H
 

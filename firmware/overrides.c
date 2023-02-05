@@ -28,6 +28,7 @@
 #include "archie.h"
 #include "c64keys.c"
 #include "acsi.c"
+#include "keytable.c"
 
 #define UIO_BUT_SW 0x01
 
@@ -135,7 +136,7 @@ int MouseButtons;
 void handlemouse(int reset)
 {
 	int byte;
-	static int delay=0;
+//	static int delay=0;
 	static int timeout;
 	static int init=0;
 	static int idx=0;
@@ -144,9 +145,9 @@ void handlemouse(int reset)
 	if(reset)
 		idx=0;
 
-	if(!CheckTimer(delay))
-		return;
-	delay=GetTimer(20);
+//	if(!CheckTimer(delay))
+//		return;
+//	delay=GetTimer(20);
 
 	if(!idx)
 	{
@@ -211,10 +212,10 @@ void handlemouse(int reset)
 					w2|=0xffffff00;
 
 				nx=MouseX+w2;
-				MouseX=nx;
+				MouseX+=nx;
 
 				nx=MouseY-w3;
-				MouseY=nx;
+				MouseY+=nx;
 			}
 		}
 	}
@@ -430,6 +431,16 @@ void arckb_enqueue_state_timeout(char c,enum arckbdstate state,int timeout)
 
 #define HEXDIGIT(x) ('0'+(x) + ((x)>9 ? 'A'-'9'-1 : 0))
 
+void sendmousebutton(int button,int edge,int code)
+{
+	if(button&1)
+	{
+		int t=edge&1 ? KDDA : KUDA;
+		arckb_enqueue_state_timeout(t|0x07,STATE_WAIT4ACK1,KBTIMEOUT);
+		arckb_enqueue_state_timeout(t|code,STATE_WAIT4ACK1,KBTIMEOUT);
+	}
+}
+
 void handlekeyboard()
 {
 	int to=CheckTimer(arckb.timeout);
@@ -445,12 +456,12 @@ void handlekeyboard()
 		switch(data)
 		{
 			case HRST:
-				putchar('R');
+//				putchar('R');
 				arckb_enqueue_state_timeout(HRST,STATE_RAK1,KBTIMEOUT);
 				break;
 
 			case RAK1:
-				putchar('1');
+//				putchar('1');
 				if(arckb.state == STATE_RAK1)
 					arckb_enqueue_state_timeout(RAK1,STATE_RAK2,KBTIMEOUT);
 				else
@@ -458,7 +469,7 @@ void handlekeyboard()
 				break;
 
 			case RAK2:
-				putchar('2');
+//				putchar('2');
 				if(arckb.state == STATE_RAK2)
 					arckb_enqueue_state_timeout(RAK2,STATE_IDLE,KBTIMEOUT);
 				else
@@ -467,13 +478,13 @@ void handlekeyboard()
 
 			// arm request keyboard id
 			case RQID:
-				putchar('I');
+//				putchar('I');
 				arckb_enqueue_state_timeout(KBID | 1,STATE_IDLE,0);
 				break;
 
 			// arm acks first byte
 			case BACK:
-				putchar('A');
+//				putchar('A');
 //				if(arckb.state != STATE_WAIT4ACK1)
 //					arckb.state = STATE_HRST;
 //				else
@@ -486,7 +497,7 @@ void handlekeyboard()
 			case SMAK:
 				arckb.ena=data&3;
 				arckb.state = STATE_IDLE;
-				putchar('M'+data&3);
+//				putchar('M'+(data&3));
 				break;
 		}
 	}
@@ -496,40 +507,54 @@ void handlekeyboard()
 	{
 		case STATE_WAIT4ACK1:
 		case STATE_WAIT4ACK2:
-			putchar('w');
+//			putchar('w');
 			if(to)
 			{
-				putchar('T');
+//				putchar('T');
 				arckb.state=STATE_IDLE;
 			}
 			break;
 
 		case STATE_RAK2:
-			putchar('W');
+//			putchar('W');
 			if(to)
 			{
-				putchar('Z');
+//				putchar('Z');
 				arckb_enqueue_state_timeout(HRST,STATE_RAK1,KBTIMEOUT);
 			}
 			break;
 		case STATE_IDLE:
-			if(MouseX || MouseY)
+			if((arckb.ena & ARC_ENA_MOUSE) && (MouseX || MouseY))
 			{
 				int t=MouseX;
-				putchar('m');
+//				putchar('m');
 				if(t<-64)
 					t=-64;
 				if(t>63)
 					t=63;
 				MouseX-=t;
-				arckb_enqueue_state_timeout(t,STATE_WAIT4ACK1,KBTIMEOUT);
-				t=MouseY;
+				arckb_enqueue_state_timeout(t&0x7f,STATE_WAIT4ACK1,KBTIMEOUT);
+				t=-MouseY;
 				if(t<-64)
 					t=-64;
 				if(t>63)
 					t=63;
-				MouseY-=t;
-				arckb_enqueue_state_timeout(t,STATE_WAIT4ACK2,KBTIMEOUT);				
+				MouseY+=t;
+				arckb_enqueue_state_timeout(t&0x7f,STATE_WAIT4ACK2,KBTIMEOUT);				
+			}
+			if(arckb.ena & ARC_ENA_KEYBOARD)
+			{
+				static int prev=0;
+				int e=MouseButtons;
+				int b=prev ^ MouseButtons;
+				sendmousebutton(b,e,0);
+				b>>=1;
+				e>>=1;
+				sendmousebutton(b,e,2);
+				b>>=1;
+				e>>=1;
+				sendmousebutton(b,e,1);
+				prev=MouseButtons;
 			}
 			/* Fall through */
 		case STATE_SEND:
@@ -552,8 +577,28 @@ void handlekeyboard()
 
 void SendKey(int key,int ext,int keyup)
 {
-	/* Translate keycodes here */
-	arckb_enqueue_state_timeout(key,STATE_WAIT4ACK1,KBTIMEOUT);
+	int arccode;
+	int t;
+	if(!arckb.ena & ARC_ENA_KEYBOARD)
+		return;
+	if(ext)
+		key|=0x80;
+	t=TestKey(key);
+	if(!keyup && t)
+		return;
+	for(arccode=0;arccode<128;++arccode)
+	{
+		if(archie_keycode[arccode]==key)
+		{
+			int t=keyup ? KUDA : KDDA;
+			putchar(keyup ? 'u' : 'd');
+			putchar(HEXDIGIT(arccode>>4));
+			putchar(HEXDIGIT(arccode&15));
+			arckb_enqueue_state_timeout(t|(arccode>>4),STATE_WAIT4ACK1,KBTIMEOUT);
+			arckb_enqueue_state_timeout(t|(arccode&15),STATE_WAIT4ACK1,KBTIMEOUT);
+			return;
+		}
+	}
 }
 
 
