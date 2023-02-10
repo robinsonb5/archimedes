@@ -1,5 +1,5 @@
 set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) fpga/mist/archimedes_mist_top.v]
-set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) fpga/mist/mist-modules/mist.qip]
+set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) fpga/mist/mist.qip]
 set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) fpga/mist/mist-modules/ide_fifo.v]
 set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) fpga/mist/mist-modules/ide.v]
 set_global_assignment -name VERILOG_FILE [file join $::quartus(qip_path) fpga/mist/sigma_delta_dac.v]

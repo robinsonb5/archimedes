@@ -420,6 +420,9 @@ data_io #(.START_ADDR(24'h40_0000), .ENABLE_IDE(1'b1)) data_io(
 	.SPI_SS4       ( SPI_SS4      ),
 	.SPI_DI        ( SPI_DI       ),
 	.SPI_DO        ( SPI_DO       ),
+`ifdef DEMISTIFY
+	.SPI_DO_IN     ( SPI_DO_IN    ),
+`endif
 	.ioctl_download( downloading  ),
 	.ioctl_upload  ( uploading    ),
 	.ioctl_index   ( dio_index    ),
