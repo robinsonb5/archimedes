@@ -54,13 +54,13 @@ struct keyspecial specialtable[]=
 
 unsigned int c64keytable[]=
 {
-	KEY_BACKSPACE, /* $00	Inst/Del */
+	LAYER(KEY_F12,KEY_BACKSPACE), /* $00	Inst/Del */
 	LAYER(KEY_NKENTER,KEY_ENTER), /* $01	Return */
 	LAYER(QUAL_BLOCKLAYER|KEY_RCTRL,QUAL_SPECIAL|0), /* $02	Crsr l/r	- special handling needed */
-	LAYER(KEY_F11,QUAL_SPECIAL|5), /* $03	F7/F8 */ /* FIXME - this one scancode exceeds 0x7f */
+	LAYER(KEY_F12,QUAL_SPECIAL|5), /* $03	F7/F8 */ /* FIXME - this one scancode exceeds 0x7f */
 	LAYER(KEY_F9,QUAL_SPECIAL|2), /* $04	F1/F2 */
 	LAYER(KEY_F10,QUAL_SPECIAL|3), /* $05	F3/F4 */
-	QUAL_SPECIAL|4, /* $06	F5/F6 */
+	LAYER(KEY_F11,QUAL_SPECIAL|4), /* $06	F5/F6 */
 	LAYER(QUAL_BLOCKLAYER|KEY_ALTGR,QUAL_SPECIAL|1), /* $07	Crsr u/d	- special handling needed */
 
 	KEY_3, /* $08	3 */
@@ -99,26 +99,26 @@ unsigned int c64keytable[]=
 	LAYER(KEY_NK6,KEY_O), /* $26	O */
 	KEY_N, /* $27	N */
 
-	KEY_EQUALS, /* $28	+ */
+	LAYER(KEY_F11,KEY_EQUALS), /* $28	+ */
 	LAYER(KEY_NKASTERISK,KEY_P), /* $29	P */
 	LAYER(KEY_NK3,KEY_L), /* $2A	L */
-	KEY_MINUS, /* $2B	− */
+	LAYER(KEY_SCROLLLOCK,KEY_MINUS), /* $2B	− */
 	LAYER(KEY_NKPOINT,KEY_PERIOD), /* $2C	> */
 	LAYER(KEY_NKMINUS,KEY_SEMICOLON), /* $2D	[ */
 	LAYER(KEY_NUMLOCK,KEY_LEFTBRACE), /* $2E	@ */
 	KEY_COMMA, /* $2F	< */
 	
-	KEY_BACKSLASH, /* $30	£ */
+	LAYER(KEY_PRTSCRN,KEY_BACKSLASH), /* $30	£ */
 	LAYER(KEY_NKASTERISK,KEY_RIGHTBRACE), /* $31	* */
 	KEY_APOSTROPHE, /* $32	] */
-	KEY_DELETE, /* $33	Clr/ Home */
+	LAYER(KEY_F11,KEY_DELETE), /* $33	Clr/ Home */
 	QUAL_RSHIFT|KEY_RSHIFT, /* $34	Right shift - special handling needed */
 	LAYER(KEY_HASH,KEY_TICK), /* $35	= */
 	KEY_HASH, /* $36	↑ */
 	LAYER(KEY_NKPLUS,KEY_SLASH), /* $37	? */
 
 	KEY_1, /* $38	1 */
-	LAYER(KEY_F12,KEY_ESC), /* $39	← */
+	LAYER(KEY_OSD,KEY_ESC), /* $39	← */
 	LAYER(KEY_TAB,QUAL_CTRL|KEY_LCTRL), /* $3A	Control */
 	KEY_2, /* $3B	2 */
 	KEY_SPACE, /* $3C	Space */

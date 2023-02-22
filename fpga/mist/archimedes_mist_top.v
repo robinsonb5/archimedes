@@ -317,8 +317,8 @@ end
 
 wire   scandoubler_en = ~scandoubler_disable && pixbaseclk_select[0] == pixbaseclk_select[1];
 
-mist_video #(.COLOR_DEPTH(4), .SD_HCNT_WIDTH(12)) mist_video (
-	.clk_sys     ( clk_vid    ),
+mist_video #(.COLOR_DEPTH(4), .SD_HCNT_WIDTH(11)) mist_video (
+	.clk_sys     ( clk_pix    ), // Was clk_vid - can't see why 4x pixel clock should be needed...
 
 	// OSD SPI interface
 	.SPI_SCK     ( SPI_SCK    ),

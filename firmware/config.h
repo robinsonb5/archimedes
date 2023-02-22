@@ -10,6 +10,8 @@
 
 /* PS/2 Mouse support */
 #define PS2_MOUSE
+#define PS2_MOUSE_WHEEL
+
 #define PS2_WRITE
 
 /* CDROM support - used by the TurboGrafx core */
@@ -40,6 +42,8 @@ here, the number of units defaults to 4. */
    This could support more buttons (if DeMiSTify itself supported them,
    which it currently doesn't) - but some cores still use the older protocol. */
 #define CONFIG_EXTJOYSTICK
+
+#define CONFIG_AUTOSCANDOUBLER
 
 #endif
 

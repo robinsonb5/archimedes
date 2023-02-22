@@ -183,11 +183,10 @@ void sendmousebutton(int button,int edge,int code)
 	}
 }
 
-void handlekeyboard()
+int handlekeyboard()
 {
 	int to=CheckTimer(arckb.timeout);
 	int status,data;
-
 	spi_uio_cmd_cont(0x04);
 	status=SPI(0xff);
 	data=SPI(0xff);
@@ -279,7 +278,7 @@ void handlekeyboard()
 				t=-MouseY;
 				if(t<-64)
 					t=-64;
-				if(t>63)
+ 				if(t>63)
 					t=63;
 				MouseY+=t;
 				arckb_enqueue_state_timeout(t&0x7f,STATE_WAIT4ACK2,KBTIMEOUT);				
@@ -314,6 +313,7 @@ void handlekeyboard()
 		default:
 			break;
 	}
+	return(arckb.out_cpu!=arckb.out_hw);
 }
 
 
