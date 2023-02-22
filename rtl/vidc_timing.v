@@ -191,7 +191,7 @@ always @(posedge clkvid) begin
 		if (hcount == vidc_hswr) hsync <= 0;
 
 		if (hcount == vidc_hcr) begin
-			hcount <= 0;
+			hcount <= 1;
 			hcursor <= 0;
 			hsync <= 1;
 
