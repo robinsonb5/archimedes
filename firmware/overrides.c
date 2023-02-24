@@ -43,7 +43,7 @@ void sendstatus()
 	DisableIO();
 }
 
-char *configstring="Arc;;"
+char *configstring="Arc;ROM;"
 	"S0U,ADF,Floppy 1:;"
 	"S1U,ADF,Floppy 2:;"
 	"S2U,HDF,Hard disk 1:;"
@@ -116,7 +116,7 @@ void saveram(const char *filename)
 	int i;
 	char *ptr=sector_buffer;
 	/* Fetch CMOS RAM from data_io */
-	SPIFPGA(SPI_FPGA_FILE_INDEX,0xff);
+	SPIFPGA(SPI_FPGA_FILE_INDEX,0x3);
 	*spiptr=0xff;
 	SPIFPGA(SPI_FPGA_FILE_RX,0xff);
 	SPI_ENABLE_FAST_INT(HW_SPI_FPGA);
@@ -199,7 +199,6 @@ char *autoboot()
 	arckb.ena=0;
 	arckb.state=STATE_IDLE;
 
-	romtype=1;
 	configstring_index=0;
 
 	sendstatus();
@@ -208,6 +207,7 @@ char *autoboot()
 	loadimage("CMOS    RAM",3);
 	loadimage("ARCHIE1 HDF",'2');
 
+	romtype=1;
 	if(!loadimage(bootrom_name,0))
 		result="ROM loading failed.";
 
