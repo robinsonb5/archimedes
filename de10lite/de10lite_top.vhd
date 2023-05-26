@@ -72,6 +72,7 @@ architecture RTL of de10lite_top is
 	
 -- internal SPI signals
 	
+	signal spi_do : std_logic;
 	signal spi_toguest : std_logic;
 	signal spi_fromguest : std_logic;
 	signal spi_ss2 : std_logic;
@@ -191,6 +192,7 @@ guest: COMPONENT archimedes_mist_top
 		CLOCK_27 => MAX10_CLK2_50&MAX10_CLK2_50, -- Comment out one of these lines to match the guest core.
 --		CLOCK_27 => MAX10_CLK2_50,
 --		RESET_N => reset_n,
+		LED => act_led,
 		-- clocks
 		DRAM_DQ => DRAM_DQ,
 		DRAM_A => DRAM_ADDR,
@@ -204,8 +206,7 @@ guest: COMPONENT archimedes_mist_top
 		DRAM_CLK => DRAM_CLK,
 		DRAM_CKE => DRAM_CKE,
 		
-		SPI_DO_IN => sd_miso,
-		SPI_DO => spi_fromguest,
+		SPI_DO => spi_do,
 		SPI_DI => spi_toguest,
 		SPI_SCK => spi_clk_int,
 		SPI_SS2	=> spi_ss2,
@@ -229,6 +230,9 @@ guest: COMPONENT archimedes_mist_top
 
 -- Pass internal signals to external SPI interface
 sd_clk <= spi_clk_int;
+spi_fromguest <= spi_do;
+spi_do <= sd_miso when spi_ss4='0' else 'Z';
+
 
 controller : entity work.substitute_mcu
 	generic map (
@@ -271,7 +275,7 @@ controller : entity work.substitute_mcu
 		intercept => intercept
 );
 
-LEDR <= (others=>'0');
+LEDR <= (0=>act_led,others=>'0');
 --CLK_I2C_SCL <= '1';
 --CLK_I2C_SDA	<='Z';
 GSENSOR_SCLK <= '0';

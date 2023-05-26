@@ -27,6 +27,43 @@
 #include "archie_keys.c"
 
 
+/* 0 and 3 chosen to line up with ROM upload indices. */
+#define BLOB_ROM 0
+#define BLOB_HDD1 1
+#define BLOB_HDD2 2
+#define BLOB_CMOS 3
+
+#define ARCHIE_CONFIG_VERSION 1
+
+struct archie_config
+{
+	char version;
+	char pad[3];
+	int status;
+	struct settings_blob blob[4]; /* 0: ROM, 1: HDD1, 2: HDD2, 3: CMOS */
+};
+
+struct archie_config configfile_data={
+	ARCHIE_CONFIG_VERSION,
+	0x0,0x0,0x0,   /* Pad */
+	0x00,          /* Status */
+	{
+		{              /* ROM dir and filename */
+			0x00, ROM_FILENAME
+		},
+		{              /* HD1 dir and filename */
+			0x00, "ARCHIE1 HDF"
+		},
+		{              /* HD1 dir and filename */
+			0x00, "ARCHIE2 HDF"
+		},
+		{              /* CMOS dir and filename */
+			0x00, "CMOS    RAM"
+		}
+	}
+};
+
+
 /* Customise statusword and configstring handling. */
 
 extern unsigned int statusword;
@@ -37,10 +74,17 @@ extern unsigned int statusword;
 
 void sendstatus()
 {
-//	configfile_data.status=statusword;
+	configfile_data.status=statusword;
 	spi_uio_cmd_cont(UIO_BUT_SW);
 	SPI(statusword);
 	DisableIO();
+}
+
+void ToggleScandoubler() /* Override ToggleScandoubler since in the Archie core it uses the same interface as the status word. */
+{
+	scandouble^=1;
+	statusword=statusword&0xf | (scandouble << 4);
+	sendstatus();
 }
 
 char *configstring="Arc;ROM;"
@@ -49,7 +93,7 @@ char *configstring="Arc;ROM;"
 	"S2U,HDF,Hard disk 1:;"
 	"S3U,HDF,Hard disk 2:;"
 	"SRU,RAM,Load CMOS RAM:;"
-	"SSU,RAM,Save CMOS RAM:;"
+	"SQU,RAM,Save CMOS RAM:;"
 	"T1,Reset;"
 	"V,v1.0.";
 static char *cfgptr;
@@ -147,9 +191,15 @@ int loadimage(const char *filename,int unit)
 		case 3: /* CMOS RAM */
 			if(filename && filename[0])
 			{
+				settings_storeblob(&configfile_data.blob[unit],filename);
 				statusword|=2;
 				sendstatus();
 				result=LoadROM(filename);
+				if(!result && !unit) /* Fallback to default ROM if not found */
+				{
+					ChangeDirectory(0);
+					LoadROM(ROM_FILENAME);
+				}
 			}
 			break;
 		/* Floppy images */
@@ -162,6 +212,7 @@ int loadimage(const char *filename,int unit)
 		/* Hard disk images */
 		case '2':
 		case '3':
+			settings_storeblob(&configfile_data.blob[unit-'1'],filename);
 			OpenHardfile(filename,u-2);
 			break;
 		/* Configuration files */
@@ -169,13 +220,21 @@ int loadimage(const char *filename,int unit)
 			romtype=3;
 			result=loadimage(filename,3);
 			break;
-		case 'S': /* Save config */
+		case 'Q': /* Save CMOS RAM */
 			romtype=3;
 			if(FileOpen(&file,filename))
 			{
 				saveram(filename);
 				FileWriteSector(&file,(char *)&sector_buffer);
 			}
+			break;
+		case 'S':
+			putchar('S');
+			result=loadsettings(filename);
+			break;
+		case 'T':
+			putchar('T');
+			result=savesettings(filename);
 			break;
 	}
 	statusword&=~2;
@@ -184,8 +243,40 @@ int loadimage(const char *filename,int unit)
 }
 
 
-const char *bootrom_name="RISCOS  ROM";
-const char *bootcfg_name="ARCHIE  CFG";
+int configtocore(char *buf)
+{
+	struct archie_config *dat=(struct archie_config *)buf;
+	int result=0;
+	/* Load the config file to sector_buffer */
+
+	if(dat->version==ARCHIE_CONFIG_VERSION)
+	{
+		memcpy(&configfile_data,buf,sizeof(configfile_data)); /* Beware - at boot we're copying the default config over itself.  Safe on 832, but undefined behaviour. */
+		statusword=configfile_data.status;
+
+		romtype=3;
+		result=settings_loadblob(&configfile_data.blob[BLOB_CMOS],3);
+
+		if(configfile_data.blob[BLOB_HDD1].filename[0])
+			settings_loadblob(&configfile_data.blob[BLOB_HDD1],'2');
+
+		if(configfile_data.blob[BLOB_HDD2].filename[0])
+			settings_loadblob(&configfile_data.blob[BLOB_HDD2],'3');
+
+		romtype=1;
+		settings_loadblob(&configfile_data.blob[BLOB_ROM],0);
+	}
+	return(result);
+}
+
+
+void coretoconfig(char *buf)
+{
+	configfile_data.status=statusword;
+	memset(buf,0,512);
+	memcpy(buf,&configfile_data,sizeof(configfile_data));
+}
+
 
 char *autoboot()
 {
@@ -201,16 +292,11 @@ char *autoboot()
 
 	configstring_index=0;
 
-	sendstatus();
-
-	romtype=3;
-	loadimage("CMOS    RAM",3);
-	loadimage("ARCHIE1 HDF",'2');
-
-	romtype=1;
-	if(!loadimage(bootrom_name,0))
-		result="ROM loading failed.";
-
+	if(!loadsettings(CONFIG_SETTINGS_FILENAME))
+	{
+		if(!(configtocore(&configfile_data.version))) /* Caution - the configfile data is updated in place - with itself! */
+			result="ROM Loading failed\n";
+	}
 	statusword&=~2;
 	sendstatus();
 

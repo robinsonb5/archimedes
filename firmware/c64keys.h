@@ -14,6 +14,7 @@ struct c64keyboard
 	int active;
 	int frame;
 	int layer;
+	int layered;
 	int qualifiers;
 	unsigned int keys[6];
 };

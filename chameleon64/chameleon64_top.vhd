@@ -115,6 +115,7 @@ architecture rtl of chameleon64_top is
 	signal intercept : std_logic;
 
 -- SD card
+	signal spi_do : std_logic;
 	signal spi_mosi : std_logic;
 	signal mmc_cs : std_logic;
 	signal spi_clk : std_logic;
@@ -192,6 +193,8 @@ architecture rtl of chameleon64_top is
 	signal iec_atn_out_r : std_logic;
 	signal iec_dat_out_r : std_logic;
 	signal iec_clk_out_r : std_logic;
+	
+	signal disk_led : std_logic;
 begin
 
 rtc_cs<='0';
@@ -391,6 +394,7 @@ rtc_cs<='0';
 	-- Guest core
 	
 	midi_txd<='1';
+	led_red <= not disk_led;
 
 	guest: COMPONENT archimedes_mist_top
 	PORT map
@@ -399,7 +403,7 @@ rtc_cs<='0';
 --		CLOCK_27 => clk8,
 --		RESET_N => reset_n,
 		-- clocks
-		LED => led_red,
+		LED => disk_led,
 	
 		-- SDRAM
 		DRAM_DQ => ram_data,
@@ -416,8 +420,7 @@ rtc_cs<='0';
 --		SDRAM_CKE => ram_cke, -- Hardwired on TC64
 
 		-- SPI interface to control module
-		SPI_DO_IN => spi_miso,
-		SPI_DO => spi_fromguest,
+		SPI_DO => spi_do,
 		SPI_DI => spi_toguest,
 		SPI_SCK => spi_clk_int,
 		SPI_SS2	=> spi_ss2,
@@ -464,6 +467,9 @@ rtc_cs<='0';
 	-- Pass internal signals to external SPI interface
 	spi_clk <= spi_clk_int;
 
+	spi_fromguest <= spi_do; -- to control CPU
+	spi_do <= spi_miso when spi_ss4 = '0' else 'Z'; -- to guest
+	
 	controller : entity work.substitute_mcu
 	generic map (
 		sysclk_frequency => 500,

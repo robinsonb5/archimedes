@@ -210,6 +210,7 @@ architecture rtl of chameleon64v2_top is
 
 -- internal SPI signals
 	
+	signal spi_do : std_logic;
 	signal spi_toguest : std_logic;
 	signal spi_fromguest : std_logic;
 	signal spi_ss2 : std_logic;
@@ -231,6 +232,7 @@ architecture rtl of chameleon64v2_top is
 	signal iec_atn_s : std_logic;
 	signal iec_dat_s : std_logic;
 
+	signal disk_led : std_logic;
 begin
 
 -- -----------------------------------------------------------------------
@@ -427,6 +429,7 @@ begin
 	grn <= unsigned(vga_green(7 downto 3));
 	blu <= unsigned(vga_blue(7 downto 3));
 
+	led_red <= not disk_led;
 
 	guest: COMPONENT archimedes_mist_top
 	PORT map
@@ -434,7 +437,7 @@ begin
 		CLOCK_27 => clk50m&clk50m, -- Comment out one of these lines to match the guest core.
 --		CLOCK_27 => clk50m,
 --		RESET_N => reset_n,
-		LED => led_red,
+		LED => disk_led,
 		-- clocks
 		DRAM_DQ => ram_d,
 		DRAM_A => ram_a,
@@ -448,8 +451,7 @@ begin
 		DRAM_CLK => ram_clk,
 --		SDRAM_CKE => ram_cke,
 		
-		SPI_DO_IN => spi_miso,
-		SPI_DO => spi_fromguest,
+		SPI_DO => spi_do,
 		SPI_DI => spi_toguest,
 		SPI_SCK => spi_clk_int,
 		SPI_SS2	=> spi_ss2,
@@ -489,6 +491,9 @@ begin
 
 	-- Pass internal signals to external SPI interface
 	spi_clk <= spi_clk_int;
+
+	spi_fromguest <= spi_do; -- to control CPU
+	spi_do <= spi_miso when spi_ss4 = '0' else 'Z'; -- to guest
 
 	controller : entity work.substitute_mcu
 	generic map (

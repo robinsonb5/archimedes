@@ -222,10 +222,20 @@ void handlec64keys()
 					/* Has the run/stop key (acting as Fn) been pressed? */
 					if(amicode&QUAL_LAYERKEY)
 					{
-						if(keyup)	/* Key up? */
-							c64keys.layer=0;
+ 						if(keyup)	/* Key up? */
+						{
+ 							c64keys.layer=0;
+							c64keys.layered=0;
+						}
 						else
-							c64keys.layer=1;
+						{
+ 							c64keys.layer=1;
+							if(!c64keys.layered)
+							{
+								c64keyboard_write(&c64keys,KEY_CAPSLOCK);
+								c64keyboard_write(&c64keys,KEY_CAPSLOCK|0x100);
+							}
+						}
 					}
 					else
 					{
@@ -285,6 +295,7 @@ void handlec64keys()
 						{
 							c64keys.qualifiers|=amicode&QUAL_MASK;
 							amicode&=0xff;
+							c64keys.layered=c64keys.layer;
 						}
 						if(amiqualup)
 							c64keyboard_write(&c64keys,amiqualup);

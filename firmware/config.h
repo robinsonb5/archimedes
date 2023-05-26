@@ -43,6 +43,11 @@ here, the number of units defaults to 4. */
    which it currently doesn't) - but some cores still use the older protocol. */
 #define CONFIG_EXTJOYSTICK
 
+#define CONFIG_SETTINGS
+#define CONFIG_SETTINGS_FILENAME "ARCHIMEDCFG"
+
+#define ROM_FILENAME "RISCOS  ROM"
+
 #define CONFIG_AUTOSCANDOUBLER
 
 #endif
